@@ -38,7 +38,7 @@ def analyze_tokens(wallet_address):
 
             token_stats[token][direction] += value
 
-         result = "📊 *Токен-статистика:*\n"
+        result = "📊 *Токен-статистика:*\n"
 
         for token, vals in token_stats.items():
             pnl = vals['out'] - vals['in']
