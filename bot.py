@@ -38,11 +38,10 @@ def analyze_tokens(wallet_address):
             token_stats[token][direction] += value
 
         result = "📊 *Токен-статистика:*\n"
-
+        
         for token, vals in token_stats.items():
             pnl = vals['out'] - vals['in']
-            result += f"
-result += f"\n{token}: IN={round(vals['in'], 2)}, OUT={round(vals['out'], 2)}, PNL={round(pnl, 2)}"
+            result += f"\n{token}: IN={round(vals['in'], 2)}, OUT={round(vals['out'], 2)}, PNL={round(pnl, 2)}"
 
         return result
     except Exception as e:
@@ -55,12 +54,10 @@ def get_defi_debank(wallet_address):
         print(f"DEBUG: Debank status = {r.status_code}")
         data = r.json()
         eth_value = data.get('total_usd_value', 0)
-        return f"
-💰 DeBank: Общая стоимость портфеля: ${eth_value:.2f}"
+        return f"\n💰 DeBank: Общая стоимость портфеля: ${eth_value:.2f}"
     except Exception as e:
         print(f"Ошибка в get_defi_debank: {e}")
-        return f"
-⚠️ Ошибка при получении данных с DeBank: {e}"
+        return f"\n⚠️ Ошибка при получении данных с DeBank: {e}"
 
 def start(update: Update, context: CallbackContext) -> None:
     keyboard = [[InlineKeyboardButton("🔎 Проанализировать кошелек", callback_data='analyze')]]
@@ -71,7 +68,6 @@ def button_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     query.message.reply_text("📩 Отправь адрес кошелька, который нужно проанализировать.")
-    return
 
 def handle_address(update: Update, context: CallbackContext) -> None:
     wallet = update.message.text.strip()
@@ -79,9 +75,7 @@ def handle_address(update: Update, context: CallbackContext) -> None:
 
     tokens_info = analyze_tokens(wallet)
     defi_info = get_defi_debank(wallet)
-    final_msg = f"{tokens_info}
-
-{defi_info}"
+    final_msg = f"{tokens_info}\n\n{defi_info}"
 
     MAX_LENGTH = 4000
     for i in range(0, len(final_msg), MAX_LENGTH):
