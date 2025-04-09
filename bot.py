@@ -42,7 +42,7 @@ def analyze_tokens(wallet_address):
         for token, vals in token_stats.items():
             pnl = vals['out'] - vals['in']
             result += f"
-{token}: IN={round(vals['in'], 2)}, OUT={round(vals['out'], 2)}, PNL={round(pnl, 2)}"
+result += f"\n{token}: IN={round(vals['in'], 2)}, OUT={round(vals['out'], 2)}, PNL={round(pnl, 2)}"
 
         return result
     except Exception as e:
