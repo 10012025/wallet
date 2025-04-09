@@ -38,12 +38,11 @@ def analyze_tokens(wallet_address):
 
             token_stats[token][direction] += value
 
-        result = "📊 *Токен-статистика:*\n"
+         result = "📊 *Токен-статистика:*\n"
 
         for token, vals in token_stats.items():
             pnl = vals['out'] - vals['in']
-            result += f"
-*{token}*: 🔽 {round(vals['in'], 2)} | 🔼 {round(vals['out'], 2)} | 🧮 PNL: {round(pnl, 2)}"
+            result += f"\n*{token}*: 🔽 {round(vals['in'], 2)} | 🔼 {round(vals['out'], 2)} | 🧮 PNL: {round(pnl, 2)}"
 
         return result
     except Exception as e:
@@ -72,14 +71,14 @@ def analyze(update: Update, context: CallbackContext) -> None:
     tokens_info = analyze_tokens(wallet)
     defi_info = get_defi_debank(wallet)
 
-    final_msg = f"{tokens_info}
+    final_msg = f"{tokens_info}\n\n{defi_info}"
 
-{defi_info}"
-    update.message.reply_text(final_msg, parse_mode="Markdown")
+    MAX_LENGTH = 4000
+    for i in range(0, len(final_msg), MAX_LENGTH):
+        update.message.reply_text(final_msg[i:i+MAX_LENGTH], parse_mode="Markdown")
 
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("👋 Привет! Отправь команду:
-/analyze <адрес кошелька>")
+    update.message.reply_text("👋 Привет! Отправь команду:\n/analyze <адрес кошелька>")
 
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN)
