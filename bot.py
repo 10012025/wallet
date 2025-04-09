@@ -1,8 +1,8 @@
 import os
 import logging
 import requests
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters, CallbackQueryHandler
 
 ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -35,14 +35,14 @@ def analyze_tokens(wallet_address):
 
             if token not in token_stats:
                 token_stats[token] = {'in': 0, 'out': 0}
-
             token_stats[token][direction] += value
 
         result = "📊 *Токен-статистика:*\n"
 
         for token, vals in token_stats.items():
             pnl = vals['out'] - vals['in']
-            result += f"\n*{token}*: 🔽 {round(vals['in'], 2)} | 🔼 {round(vals['out'], 2)} | 🧮 PNL: {round(pnl, 2)}"
+            result += f"
+{token}: IN={round(vals['in'], 2)}, OUT={round(vals['out'], 2)}, PNL={round(pnl, 2)}"
 
         return result
     except Exception as e:
@@ -55,37 +55,45 @@ def get_defi_debank(wallet_address):
         print(f"DEBUG: Debank status = {r.status_code}")
         data = r.json()
         eth_value = data.get('total_usd_value', 0)
-        return f"💰 *DeBank*: Общая стоимость портфеля: ${eth_value:.2f}"
+        return f"
+💰 DeBank: Общая стоимость портфеля: ${eth_value:.2f}"
     except Exception as e:
         print(f"Ошибка в get_defi_debank: {e}")
-        return f"⚠️ Ошибка при получении данных с DeBank: {e}"
+        return f"
+⚠️ Ошибка при получении данных с DeBank: {e}"
 
-def analyze(update: Update, context: CallbackContext) -> None:
-    if not context.args:
-        update.message.reply_text("ℹ️ Использование: /analyze <адрес_кошелька>")
-        return
+def start(update: Update, context: CallbackContext) -> None:
+    keyboard = [[InlineKeyboardButton("🔎 Проанализировать кошелек", callback_data='analyze')]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text("👋 Привет! Нажми кнопку ниже, чтобы начать:", reply_markup=reply_markup)
 
-    wallet = context.args[0]
+def button_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
+    query.message.reply_text("📩 Отправь адрес кошелька, который нужно проанализировать.")
+    return
+
+def handle_address(update: Update, context: CallbackContext) -> None:
+    wallet = update.message.text.strip()
     update.message.reply_text("🔍 Анализирую адрес...")
 
     tokens_info = analyze_tokens(wallet)
     defi_info = get_defi_debank(wallet)
+    final_msg = f"{tokens_info}
 
-    final_msg = f"{tokens_info}\n\n{defi_info}"
+{defi_info}"
 
     MAX_LENGTH = 4000
     for i in range(0, len(final_msg), MAX_LENGTH):
-        update.message.reply_text(final_msg[i:i+MAX_LENGTH], parse_mode="Markdown")
-
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("👋 Привет! Отправь команду:\n/analyze <адрес кошелька>")
+        update.message.reply_text(final_msg[i:i+MAX_LENGTH])
 
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN)
-    dispatcher = updater.dispatcher
+    dp = updater.dispatcher
 
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("analyze", analyze))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CallbackQueryHandler(button_callback))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_address))
 
     updater.start_polling()
     updater.idle()
